@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CS232 · Crawl workspace</title>
+  <style>
+    :root { color-scheme: light; font: 14px/1.5 "Segoe UI", sans-serif; color: #213c40; background: #eef3f1; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    [hidden] { display: none !important; }
+    button, input, select { font: inherit; }
+    button, input, select { border-radius: 8px; }
+    button { padding: 9px 12px; border: 1px solid #cbdad5; background: #e9f1ed; color: #254c43; cursor: pointer; }
+    button:hover:not(:disabled) { background: #d9e8e1; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    input:not([type=checkbox]), select { width: 100%; min-width: 0; padding: 9px 10px; border: 1px solid #cbdad5; background: #fff; color: #213c40; }
+    input[type=checkbox] { accent-color: #087f72; }
+    input[type=number] { width: 72px; }
+    :focus-visible { outline: 3px solid #e7ad55; outline-offset: 2px; }
+    h1, h2, p { margin: 0; }
+    h1 { font-size: 22px; letter-spacing: -.6px; }
+    h2 { font-size: 16px; }
+    .eyebrow { color: #66837a; font-size: 11px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; }
+    .muted { color: #6b817c; font-size: 12px; }
+    .workspace { display: grid; grid-template-columns: 286px minmax(360px, 1fr) 300px; gap: 16px; padding: 16px; min-width: 1000px; height: 100vh; height: 100dvh; }
+    .panel { min-width: 0; min-height: 0; border: 1px solid #d9e4de; border-radius: 16px; background: #fff; overflow: hidden; box-shadow: 0 4px 20px #244b3d05; }
+    .controls { overflow-y: auto; padding: 22px 18px; scrollbar-gutter: stable; }
+    .brand { padding-bottom: 20px; border-bottom: 1px solid #e4ece7; margin-bottom: 18px; }
+    .brand h1 { color: #087f72; margin: 4px 0; }
+    .control-section + .control-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid #e4ece7; }
+    .section-title { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .section-title span { background: #edf5f1; color: #087f72; font-size: 11px; border-radius: 6px; padding: 3px 6px; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .stack, #job { display: flex; flex-direction: column; gap: 12px; }
+    #job { margin-top: 16px; }
+    .field { display: flex; flex-direction: column; gap: 6px; font-size: 12px; font-weight: 600; }
+    .opt { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+    .opt input[type=checkbox] { flex-shrink: 0; }
+    #start, #open, #create-collection, #cm-run { background: #087f72; color: #fff; border-color: #087f72; }
+    #start:hover:not(:disabled), #open:hover:not(:disabled), #create-collection:hover:not(:disabled), #cm-run:hover:not(:disabled) { background: #06685d; }
+    #stop, #cm-stop { background: #fff2dd; border-color: #efd4a4; color: #80551c; }
+    #delete-collection, #cm-reset-all, .cmt-reset { background: #fff7f5; color: #a65043; border-color: #efd7d0; }
+    #session { display: block; margin-top: 8px; font-size: 12px; color: #6b817c; overflow-wrap: anywhere; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; background: #edf2ef; font-size: 12px; font-weight: 600; }
+    .badge.running, .badge.done { background: #d8f2e4; color: #24634c; }
+    .badge.waiting_login, .badge.opening { background: #fff0d4; color: #845a22; }
+    .badge.error, .badge.stalled { background: #fce2dc; color: #9a4437; }
+    .feed { display: flex; flex-direction: column; background: #f7faf8; }
+    .feed-heading { background: #fff; padding: 20px; border-bottom: 1px solid #e1ebe5; }
+    .feed-title { display: flex; justify-content: space-between; gap: 12px; align-items: center; margin-bottom: 14px; }
+    .total-pill { padding: 5px 10px; border-radius: 8px; background: #e7f3ec; font-size: 12px; white-space: nowrap; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+    .stats span { background: #f3f6f3; border-radius: 8px; padding: 8px; color: #6b817c; font-size: 11px; }
+    .stats b { display: block; font-size: 20px; color: #264e43; font-weight: 600; }
+    #url, #reason { display: block; overflow-wrap: anywhere; font-size: 12px; color: #6b817c; }
+    #url:empty, #reason:empty { display: none; }
+    #url { margin-top: 10px; } #reason { color: #9a642c; margin-top: 6px; }
+    #list { flex: 1; min-height: 0; overflow: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; scrollbar-gutter: stable; }
+    .card { flex-shrink: 0; min-width: 0; border: 1px solid #dfe8e2; border-radius: 12px; padding: 18px; background: #fff; overflow-wrap: anywhere; }
+    .card header { display: flex; justify-content: space-between; gap: 8px; }
+    .card header > div { min-width: 0; }
+    .author { font-size: 15px; }
+    .meta, .counts { color: #75867f; font-size: 12px; }
+    .counts { margin: 12px 0; }
+    .text { white-space: pre-wrap; }
+    .images { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .images a { max-width: 100%; }
+    .images img { max-height: 180px; max-width: 100%; border-radius: 8px; background: #edf2ef; object-fit: contain; }
+    .tag { flex-shrink: 0; align-self: flex-start; font-size: 11px; background: #eef4ee; color: #50765e; border-radius: 5px; padding: 3px 6px; }
+    .tag:empty { display: none; }
+    .permalink { display: inline-block; margin-top: 5px; color: #087f72; font-size: 12px; text-decoration: none; }
+    .permalink:hover { text-decoration: underline; }
+    .cbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .cmt-btn, .cmt-reset { font-size: 12px; padding: 6px 9px; }
+    .cmt-box { margin-top: 12px; border-top: 1px solid #e4ece7; }
+    .cmt-row { display: flex; gap: 8px; padding: 10px 0; border-bottom: 1px solid #eff3f0; }
+    .cmt-row.reply { margin-left: 20px; } .cmt-row.reply2 { margin-left: 40px; }
+    .cmt-av { flex: 0 0 28px; width: 28px; height: 28px; text-align: center; line-height: 28px; background: #e1eee6; color: #4f7562; border-radius: 50%; }
+    .cmt-main { min-width: 0; } .cmt-name { font-size: 13px; font-weight: 600; }
+    .cmt-when { font-size: 11px; color: #7e9086; margin-left: 5px; }
+    .cmt-text { font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .cmt-blank, .cmt-empty, .cmt-loading, .empty { color: #7e9086; }
+    .cmt-empty, .cmt-loading { padding: 10px 0; font-size: 12px; }
+    #list > .empty { text-align: center; padding: 60px 12px; }
+    .cmark { display: block; margin-top: 10px; font-size: 12px; color: #71847a; }
+    .cmark.busy { color: #087f72; }
+    .logs { display: flex; flex-direction: column; background: #142c2b; border-color: #142c2b; color: #d6e9e0; }
+    .log-heading { padding: 22px 18px 16px; border-bottom: 1px solid #2c4541; }
+    .logs .eyebrow { color: #8cb5a5; } .logs h2 { margin: 4px 0; }
+    .logs .muted { color: #8eada2; }
+    #log { flex: 1; min-height: 0; overflow: auto; margin: 0; padding: 18px; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px/1.8 Consolas, monospace; scrollbar-color: #45675c #142c2b; }
+    #log:empty::before { content: "Chưa có hoạt động.\A Mở một trang để bắt đầu thu thập."; color: #77978a; }
+    @media (max-width: 1200px) {
+      .workspace { grid-template-columns: 250px minmax(340px, 1fr) 260px; gap: 12px; padding: 12px; min-width: 900px; }
+      .controls { padding: 18px 14px; } .feed-heading { padding: 16px; }
+      #list { padding: 12px; } .card { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="workspace" aria-label="Không gian thu thập dữ liệu">
+    <aside class="panel controls" aria-label="Chức năng thu thập">
+      <div class="brand">
+        <div class="eyebrow">CS232 / Lab 01</div>
+        <h1>Crawl workspace</h1>
+        <p class="muted">Thu thập · Lưu trữ · Theo dõi</p>
+      </div>
+      <section class="control-section">
+        <div class="section-title"><span>01</span><h2>Phiên thu thập</h2></div>
+        <span id="status" class="badge">starting</span>
+        <span id="session"></span>
+        <form id="job" hidden>
+          <label class="field" for="page-url">Đường dẫn trang
+            <input id="page-url" type="url" placeholder="https://www.facebook.com/…" required>
+          </label>
+          <label class="opt"><input id="refresh" type="checkbox"> Cập nhật bài đã lưu nếu nội dung đổi</label>
+          <label class="opt">Chờ mỗi vòng <input id="idle" type="number" min="1" max="60" value="8"> giây</label>
+          <label class="field">Chế độ trình duyệt
+            <select id="mode"><option value="1">Ẩn (headless)</option><option value="0">Hiện cửa sổ</option></select>
+          </label>
+          <button id="open" type="submit">Mở trang</button>
+        </form>
+        <div class="actions"><button id="start" disabled>Bắt đầu crawl</button><button id="stop">Dừng</button></div>
+      </section>
+      <div id="tools">
+        <section class="control-section" style="margin-top:24px; padding-top:20px; border-top:1px solid #e4ece7">
+          <div class="section-title"><span>02</span><h2>Collection</h2></div>
+          <div class="stack">
+            <label class="field">Bộ bài viết <select id="collection"></select></label>
+            <input id="new-collection" type="text" placeholder="Tên collection mới" aria-label="Tên collection mới">
+          </div>
+          <div class="actions"><button id="create-collection">Tạo &amp; chọn</button><button id="delete-collection" title="Xóa collection đang chọn">Xóa</button></div>
+        </section>
+        <section class="control-section">
+          <div class="section-title"><span>03</span><h2>Bình luận</h2></div>
+          <label class="opt" title="Chỉ lấy bài có số bình luận từ mức này trở lên">Từ <input id="cm-min" type="number" min="1" max="999" value="2"> bình luận</label>
+          <div class="actions"><button id="cm-run" title="Mở từng bài và lấy bình luận">Lấy bình luận</button><button id="cm-stop" hidden>Dừng bình luận</button><button id="cm-reset-all" title="Xoá toàn bộ bình luận đã lưu trong collection">Xoá tất cả</button></div>
+          <span id="cmark" class="cmark"></span>
+        </section>
+      </div>
+    </aside>
+    <section class="panel feed" aria-label="Bài viết đã thu thập">
+      <div class="feed-heading">
+        <div class="feed-title"><div><div class="eyebrow">Dữ liệu thu thập</div><h2>Bài viết đã crawl</h2></div><span class="total-pill">Đã lưu <b id="total">0</b></span></div>
+        <div class="stats"><span>Mới <b id="new">0</b></span><span>Cập nhật <b id="updated">0</b></span><span>Bỏ qua <b id="skip">0</b></span><span>Vòng <b id="rounds">0</b></span></div>
+        <input id="q" type="search" placeholder="Tìm theo tên hoặc nội dung…" aria-label="Tìm bài viết">
+        <span id="url"></span><span id="reason"></span>
+      </div>
+      <div id="list" tabindex="0" aria-label="Danh sách bài viết"></div>
+    </section>
+    <aside class="panel logs" aria-label="Nhật ký thu thập">
+      <div class="log-heading"><div class="eyebrow">Theo dõi trực tiếp</div><h2>Nhật ký hoạt động</h2><p class="muted">Tiến độ và kết quả của phiên crawl</p></div>
+      <pre id="log" tabindex="0" aria-label="Nội dung nhật ký"></pre>
+    </aside>
+  </main>
+  <script>
+    const statusLabels = {
+      idle: "sẵn sàng",
+      opening: "đang mở trang",
+      starting: "đang mở",
+      waiting_login: "đang chờ đăng nhập",
+      running: "đang crawl",
+      stalled: "đang chờ bài mới",
+      done: "xong",
+      error: "lỗi"
+    };
+    const reasons = {
+      cursor_empty: "hết cursor",
+      no_new_posts: "không còn bài mới",
+      user_stop: "đã dừng",
+      rate_limited: "bị giới hạn tốc độ — nghỉ một lát rồi chạy lại",
+      login_required: "Facebook yêu cầu đăng nhập lại",
+    };
+    const cards = new Map();
+    const postsById = new Map();
+    let pageUrl = "";
+    let query = "";
+    let collectionId = 0;
+    let controlsBusy = false;
+    let commentsRunning = false;
+    let postsRequest = 0;
+
+    const statusEl = document.querySelector("#status");
+    const startBtn = document.querySelector("#start");
+    const stopBtn = document.querySelector("#stop");
+    const jobForm = document.querySelector("#job");
+    const urlInput = document.querySelector("#page-url");
+    const refreshInput = document.querySelector("#refresh");
+    const idleInput = document.querySelector("#idle");
+    const modeSel = document.querySelector("#mode");
+    const collectionSel = document.querySelector("#collection");
+    const newCollectionInput = document.querySelector("#new-collection");
+    const createCollectionBtn = document.querySelector("#create-collection");
+    const deleteCollectionBtn = document.querySelector("#delete-collection");
+    const busyStatuses = new Set(["starting", "opening", "waiting_login", "running", "stalled"]);
+
+    function applyStatus(data) {
+      const nextUrl = data.page_url || "";
+      const urlChanged = nextUrl !== pageUrl;
+      pageUrl = nextUrl;
+      statusEl.textContent = statusLabels[data.status] || data.status || "sẵn sàng";
+      statusEl.className = "badge " + (data.status || "");
+      document.querySelector("#url").textContent = pageUrl;
+      document.querySelector("#new").textContent = data.new_count || 0;
+      document.querySelector("#updated").textContent = data.updated_count || 0;
+      document.querySelector("#skip").textContent = data.skip_count || 0;
+      document.querySelector("#rounds").textContent = data.rounds || 0;
+      const reason = reasons[data.stop_reason] || data.stop_reason || "";
+      document.querySelector("#reason").textContent = reason ? "Lý do dừng: " + reason : "";
+      const session = document.querySelector("#session");
+      if (data.status === "waiting_login") {
+        session.textContent = data.session_ready
+          ? "session còn — bấm Bắt đầu crawl"
+          : "đăng nhập trên cửa sổ Chromium, rồi bấm Bắt đầu crawl";
+      } else if (data.status === "idle") {
+        session.textContent = "dán link page rồi bấm Mở trang";
+      } else if (data.session_ready) {
+        session.textContent = "session còn";
+      } else if (data.status === "opening") {
+        session.textContent = "đang mở Chromium";
+      } else {
+        session.textContent = "";
+      }
+      const busy = busyStatuses.has(data.status);
+      const locked = busy || !!data.comment_running;
+      controlsBusy = locked;
+      startBtn.disabled = data.status !== "waiting_login";
+      collectionSel.disabled = locked;
+      newCollectionInput.disabled = locked;
+      createCollectionBtn.disabled = locked;
+      deleteCollectionBtn.disabled = locked || !collectionId || collectionId === 1;
+      cmRunBtn.disabled = locked || !data.controls;
+      cmResetAllBtn.disabled = locked;
+      cmMinInput.disabled = locked;
+      document.querySelectorAll('.cmt-reset').forEach(button => { button.disabled = locked; });
+      if (data.collection_id && Number(collectionSel.value) !== Number(data.collection_id)) {
+        if ([...collectionSel.options].some((o) => Number(o.value) === Number(data.collection_id))) {
+          collectionSel.value = String(data.collection_id);
+          collectionId = Number(data.collection_id);
+          loadPosts();
+        }
+      }
+      if (data.controls) {
+        stopBtn.disabled = !busy;
+        jobForm.hidden = false;
+        urlInput.disabled = locked;
+        refreshInput.disabled = locked;
+        idleInput.disabled = locked;
+        modeSel.disabled = locked;
+        document.querySelector("#open").disabled = locked;
+        if (pageUrl && document.activeElement !== urlInput) urlInput.value = pageUrl;
+        if (document.activeElement !== refreshInput) refreshInput.checked = !!data.refresh;
+        if (data.idle_timeout && document.activeElement !== idleInput) idleInput.value = data.idle_timeout;
+        if (typeof data.headless === "boolean" && !modeTouched && document.activeElement !== modeSel) {
+          modeSel.value = data.headless ? "1" : "0";
+        }
+      } else {
+        stopBtn.disabled = data.status === "starting";
+        jobForm.hidden = true;
+      }
+      if (Array.isArray(data.logs)) document.querySelector("#log").textContent = data.logs.join("\n");
+      if (urlChanged) loadPosts();
+      if (typeof data.comment_running === "boolean") {
+        const running = data.comment_running;
+        cmRunBtn.hidden = running;
+        cmStopBtn.hidden = !running;
+        cmStopBtn.disabled = false;
+        if (running) {
+          CMARK.textContent =
+            "đang lấy bình luận… xong " + data.comment_done + "/" + data.comment_total;
+          CMARK.classList.add("busy");
+        } else {
+          loadCommentProgress();
+          if (commentsRunning) loadPosts();
+        }
+        commentsRunning = running;
+      }
+    }
+
+    function card(post, flags) {
+      const el = document.createElement("article");
+      el.className = "card";
+      el.id = "post-" + post.post_id;
+      const when = [post.created_at, post.time_label].filter(Boolean).join(" · ");
+      el.innerHTML = `
+        <header>
+          <div>
+            <strong class="author"></strong>
+            <div class="meta time"></div>
+            <a class="permalink" target="_blank" rel="noreferrer">Xem bài trên Facebook</a>
+          </div>
+          <span class="tag flag"></span>
+        </header>
+        <div class="counts"></div>
+        <div class="text"></div>
+        <div class="images"></div>
+        <div class="cbar">
+          <button type="button" class="cmt-btn">Bình luận</button>
+          <button type="button" class="cmt-reset" title="Xoá bình luận đã lưu của bài này">Xoá</button>
+        </div>
+        <div class="cmt-box" hidden></div>`;
+      fill(el, post, flags);
+      return el;
+    }
+
+    function fill(el, post, flags) {
+      el.querySelector(".author").textContent = post.author || "(không tên)";
+      el.querySelector(".time").textContent = [post.created_at, post.time_label].filter(Boolean).join(" · ");
+      el.querySelector(".counts").textContent = "Like " + post.like_count + " · Bình luận " + post.comment_count;
+      const link = el.querySelector(".permalink");
+      if (post.permalink) {
+        link.href = post.permalink;
+        link.hidden = false;
+        link.textContent = "Xem bài trên Facebook";
+      } else {
+        link.hidden = true;
+        link.removeAttribute("href");
+        link.textContent = "";
+      }
+      el.querySelector(".text").textContent = post.text || "";
+      const status = post.comments_status || "pending";
+      const btn = el.querySelector(".cmt-btn");
+      const reset = el.querySelector(".cmt-reset");
+      if (!post.comment_count) {
+        btn.textContent = "Không có bình luận";
+        btn.disabled = true;
+      } else if (status === "done") {
+        btn.textContent = "Bình luận đã lưu: " + (post.comments_saved || 0);
+        btn.disabled = false;
+      } else if (status === "error") {
+        btn.textContent = "Lỗi — bấm để xem/thử lại (" + (post.comments_saved || 0) + ")";
+        btn.disabled = false;
+      } else {
+        btn.textContent = "Lấy " + post.comment_count + " bình luận";
+        btn.disabled = false;
+      }
+      reset.hidden = !post.comments_saved;
+      reset.disabled = controlsBusy;
+      const flag = el.querySelector(".flag");
+      flag.textContent = flags && flags.skipped ? "đã có" : (flags && flags.updated ? "đã cập nhật" : "");
+      const box = el.querySelector(".images");
+      box.replaceChildren();
+      const urls = post.image_urls || [];
+      if (!urls.length) {
+        const note = document.createElement("span");
+        note.className = "empty";
+        note.textContent = "không có ảnh";
+        box.appendChild(note);
+        return;
+      }
+      for (const url of urls) {
+        const link = document.createElement("a");
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        const img = document.createElement("img");
+        img.src = url;
+        img.alt = "";
+        link.appendChild(img);
+        box.appendChild(link);
+      }
+    }
+
+    function upsert(post, flags) {
+      postsById.set(post.post_id, post);
+      let el = cards.get(post.post_id);
+      if (!el) {
+        const empty = document.querySelector("#list > .empty");
+        if (empty) empty.remove();
+        el = card(post, flags);
+        cards.set(post.post_id, el);
+        document.querySelector("#list").prepend(el);
+        return;
+      }
+      fill(el, post, flags);
+    }
+
+    const CMARK = document.querySelector("#cmark");
+    const cmRunBtn = document.querySelector("#cm-run");
+    const cmStopBtn = document.querySelector("#cm-stop");
+    const cmResetAllBtn = document.querySelector("#cm-reset-all");
+    const cmMinInput = document.querySelector("#cm-min");
+
+    async function loadCommentProgress() {
+      const response = await fetch("/api/comments/progress");
+      if (!response.ok) return;
+      const p = await response.json();
+      CMARK.textContent =
+        "bình luận: đã lấy " + p.done + "/" + p.eligible + " bài · " + p.saved + " bình luận"
+        + (p.error ? " · " + p.error + " lỗi" : "");
+      CMARK.classList.toggle("busy", p.pending > 0 && p.done < p.eligible);
+    }
+
+    cmRunBtn.onclick = async () => {
+      cmRunBtn.disabled = true;
+      const response = await fetch("/api/comments/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ min_comments: Number(cmMinInput.value || 2), limit: 0, headless: modeSel.value === "1" })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        alert(typeof body.detail === "string" ? body.detail : "không bắt đầu được");
+      }
+      cmRunBtn.disabled = controlsBusy;
+      loadCommentProgress();
+    };
+
+    cmStopBtn.onclick = async () => {
+      await fetch("/api/comments/stop", { method: "POST" });
+      cmStopBtn.disabled = true;
+    };
+
+    cmResetAllBtn.onclick = async () => {
+      if (!confirm("Xoá toàn bộ bình luận đã lưu trong collection này?")) return;
+      await fetch("/api/comments/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ post_id: "" })
+      });
+      cards.forEach((el) => { el.querySelector(".cmt-box").hidden = true; });
+      loadPosts();
+      loadCommentProgress();
+    };
+
+    function cmtRow(c) {
+      const row = document.createElement("div");
+      row.className = "cmt-row" + (c.depth ? (c.depth > 1 ? " reply2" : " reply") : "");
+      const av = document.createElement("div");
+      av.className = "cmt-av";
+      av.textContent = (c.author || "?").trim().charAt(0).toUpperCase() || "?";
+      const main = document.createElement("div");
+      main.className = "cmt-main";
+      const head = document.createElement("div");
+      const name = document.createElement("span");
+      name.className = "cmt-name";
+      name.textContent = c.author || "(không tên)";
+      head.appendChild(name);
+      if (c.created_at) {
+        const when = document.createElement("span");
+        when.className = "cmt-when";
+        when.textContent = c.created_at;
+        head.appendChild(when);
+      }
+      if (c.like_count) {
+        const likes = document.createElement("span");
+        likes.className = "cmt-when";
+        likes.textContent = "· " + c.like_count + " thích";
+        head.appendChild(likes);
+      }
+      const text = document.createElement("div");
+      text.className = "cmt-text";
+      const ctext = (c.text || "").trim();
+      text.textContent = ctext || "(bình luận không có nội dung)";
+      if (!ctext) text.classList.add("cmt-blank");
+      main.append(head, text);
+      row.append(av, main);
+      return row;
+    }
+
+    async function toggleComments(el, post) {
+      const box = el.querySelector(".cmt-box");
+      if (!box.hidden) {
+        box.hidden = true;
+        box.replaceChildren();
+        return;
+      }
+      box.hidden = false;
+      box.replaceChildren();
+      const loading = document.createElement("div");
+      loading.className = "cmt-loading";
+      loading.textContent = "Đang tải bình luận…";
+      box.appendChild(loading);
+      const response = await fetch("/api/comments?post_id=" + encodeURIComponent(post.post_id) + "&limit=500");
+      if (!response.ok) {
+        box.replaceChildren();
+        const err = document.createElement("div");
+        err.className = "cmt-empty";
+        err.textContent = "không tải được bình luận";
+        box.appendChild(err);
+        return;
+      }
+      const data = await response.json();
+      box.replaceChildren();
+      if (!data.comments.length) {
+        const empty = document.createElement("div");
+        empty.className = "cmt-empty";
+        const p = data.post || {};
+        if (p.comments_saved) {
+          empty.textContent = "Bài này có " + p.comments_saved + " bình luận đã lưu.";
+        } else if (p.comment_count >= 2) {
+          empty.textContent = "Chưa lấy bình luận (Facebook báo " + p.comment_count + "). Bấm Lấy bình luận ở khung chức năng bên trái để chạy.";
+        } else {
+          empty.textContent = "Bài này không có bình luận.";
+        }
+        box.appendChild(empty);
+        return;
+      }
+      const replies = data.comments.filter((c) => c.depth > 0).length;
+      const head = document.createElement("div");
+      head.className = "cmt-when";
+      head.style.marginBottom = "6px";
+      head.textContent = data.total + " bình luận đã lưu" + (replies ? " (" + replies + " trả lời)" : "");
+      box.appendChild(head);
+      for (const c of data.comments) box.appendChild(cmtRow(c));
+    }
+
+    document.querySelector("#list").addEventListener("click", async (event) => {
+      const card = event.target.closest(".card");
+      if (!card) return;
+      const postId = card.id.replace(/^post-/, "");
+      const post = (postsById && postsById.get(postId)) || { post_id: postId, comment_count: 1 };
+      if (event.target.closest(".cmt-btn")) {
+        event.preventDefault();
+        await toggleComments(card, post);
+      } else if (event.target.closest(".cmt-reset")) {
+        event.preventDefault();
+        if (!confirm("Xoá bình luận đã lưu của bài này?")) return;
+        await fetch("/api/comments/reset", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ post_id: postId })
+        });
+        card.querySelector(".cmt-box").hidden = true;
+        loadPosts();
+        loadCommentProgress();
+      }
+    });
+
+    async function loadCollections() {
+      const response = await fetch("/api/collections");
+      const data = await response.json();
+      collectionId = Number(data.current) || 0;
+      collectionSel.replaceChildren();
+      for (const col of data.collections) {
+        const option = document.createElement("option");
+        option.value = col.id;
+        option.textContent = `${col.name} (${col.post_count})`;
+        collectionSel.appendChild(option);
+      }
+      collectionSel.value = String(data.current);
+      deleteCollectionBtn.disabled = controlsBusy || !collectionId || collectionId === 1;
+    }
+
+    async function loadPosts() {
+      const requestId = ++postsRequest;
+      const params = new URLSearchParams({ q: query, limit: "50" });
+      const response = await fetch("/api/posts?" + params.toString());
+      const data = await response.json();
+      if (requestId !== postsRequest) return;
+      document.querySelector("#total").textContent = data.total;
+      const list = document.querySelector("#list");
+      list.replaceChildren();
+      cards.clear();
+      postsById.clear();
+      if (!data.posts.length) {
+        const note = document.createElement("p");
+        note.className = "empty";
+        note.textContent = "Chưa có bài";
+        list.appendChild(note);
+        return;
+      }
+      for (const post of data.posts.slice().reverse()) upsert(post, null);
+    }
+
+    let modeTouched = false;
+    modeSel.onchange = () => {
+      modeTouched = true;
+      try {
+        localStorage.setItem("pagecrawl:headless", modeSel.value);
+      } catch (err) { /* Bỏ qua khi trình duyệt không cho lưu tùy chọn. */ }
+    };
+    try {
+      const savedMode = localStorage.getItem("pagecrawl:headless");
+      if (savedMode === "0" || savedMode === "1") {
+        modeSel.value = savedMode;
+        modeTouched = true;
+      }
+    } catch (err) { /* Bỏ qua khi trình duyệt không cho lưu tùy chọn. */ }
+
+    jobForm.onsubmit = async (event) => {
+      event.preventDefault();
+      const response = await fetch("/api/open", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: urlInput.value.trim(),
+          refresh: refreshInput.checked,
+          idle_timeout: Number(idleInput.value || 8),
+          headless: modeSel.value === "1"
+        })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        const detail = body.detail;
+        alert(typeof detail === "string" ? detail : "không mở được trang");
+      }
+    };
+    startBtn.onclick = async () => {
+      const response = await fetch("/api/start", { method: "POST" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        alert(body.detail || "không bắt đầu được");
+      }
+    };
+    stopBtn.onclick = () => fetch("/api/stop", { method: "POST" });
+    collectionSel.onchange = async () => {
+      const response = await fetch("/api/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ collection_id: Number(collectionSel.value) })
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        alert(body.detail || "không đổi được collection");
+        await loadCollections();
+        return;
+      }
+      collectionId = Number(collectionSel.value);
+      await loadCollections();
+      await loadPosts();
+    };
+    createCollectionBtn.onclick = async () => {
+      const name = newCollectionInput.value.trim();
+      if (!name) return;
+      const create = await fetch("/api/collections", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name })
+      });
+      if (!create.ok) {
+        const body = await create.json().catch(() => ({}));
+        alert(body.detail || "không tạo được collection");
+        return;
+      }
+      const created = await create.json();
+      const select = await fetch("/api/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ collection_id: created.collection.id })
+      });
+      if (!select.ok) {
+        await loadCollections();
+        return;
+      }
+      collectionId = Number(created.collection.id);
+      newCollectionInput.value = "";
+      await loadCollections();
+      await loadPosts();
+    };
+    deleteCollectionBtn.onclick = async () => {
+      if (!collectionId || collectionId === 1) return;
+      const name = collectionSel.options[collectionSel.selectedIndex]?.textContent || "";
+      if (!confirm(`Xóa collection "${name}"? Tất cả bài trong collection sẽ bị xóa.`)) return;
+      const response = await fetch("/api/collections/" + collectionId, { method: "DELETE" });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        alert(body.detail || "không xóa được collection");
+        return;
+      }
+      collectionId = 1;
+      await loadCollections();
+      await loadPosts();
+    };
+    document.querySelector("#q").oninput = (event) => {
+      query = event.target.value.trim();
+      clearTimeout(window._searchTimer);
+      window._searchTimer = setTimeout(loadPosts, 200);
+    };
+
+    function onEvent(data) {
+      if (data.type === "status") applyStatus(data);
+      else if (data.type === "log") {
+        const log = document.querySelector("#log");
+        const follow = log.scrollHeight - log.scrollTop - log.clientHeight < 40;
+        log.textContent += (log.textContent ? "\n" : "") + data.line;
+        if (follow) log.scrollTop = log.scrollHeight;
+      } else if (data.type === "post") {
+        if (query) {
+          loadPosts();
+          return;
+        }
+        if (data.post.collection_id && Number(data.post.collection_id) !== Number(collectionId)) return;
+        const known = cards.has(data.post.post_id);
+        upsert(data.post, data);
+        if (!query && !known && !data.skipped) {
+          const total = document.querySelector("#total");
+          total.textContent = String(Number(total.textContent || "0") + 1);
+        }
+
+      }
+    }
+
+async function boot() {
+      const response = await fetch("/api/state");
+      const data = await response.json();
+      applyStatus(data);
+      await loadCollections();
+      await loadPosts();
+      await loadCommentProgress();
+      const source = new EventSource("/api/events");
+      source.onmessage = (event) => onEvent(JSON.parse(event.data));
+      source.onerror = () => {
+        source.close();
+        setTimeout(boot, 2000);
+      };
+    }
+    boot();
+  </script>
+</body>
+</html>

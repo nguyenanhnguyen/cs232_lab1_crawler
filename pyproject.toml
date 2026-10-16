@@ -1,0 +1,28 @@
+[project]
+name = "cs232-lab1"
+version = "1.0.0"
+description = "Thu thập bài viết và bình luận với giao diện theo dõi cục bộ"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "playwright>=1.49",
+  "playwright-stealth>=2.0",
+  "pydantic>=2.10",
+  "typer>=0.15",
+  "uvicorn>=0.32",
+]
+
+[project.scripts]
+cs232-lab1 = "cs232_lab1.app:app"
+pagecrawl = "cs232_lab1.app:app"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["cs232_lab1"]
+package-dir = {cs232_lab1 = "."}
+
+[tool.setuptools.package-data]
+cs232_lab1 = ["dashboard.html"]
