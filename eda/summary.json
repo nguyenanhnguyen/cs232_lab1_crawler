@@ -1,0 +1,74 @@
+{
+  "posts": 10168,
+  "comments_saved": 35423,
+  "collections": [
+    {
+      "id": 1,
+      "name": "mặc định",
+      "posts": 10168
+    }
+  ],
+  "crawl_runs_by_status": {
+    "done": 6,
+    "running": 8,
+    "stalled": 1,
+    "starting": 2
+  },
+  "posts_with_text": 9904,
+  "posts_with_images": 3648,
+  "posts_with_permalink": 10168,
+  "posts_with_reported_comments": 6048,
+  "comment_status": {
+    "done": 4412,
+    "pending": 5756
+  },
+  "comment_depth": {
+    "0": 20839,
+    "1": 10544,
+    "2": 4039,
+    "3": 1
+  },
+  "post_likes": {
+    "average": 146.12,
+    "median": 87.0,
+    "p90": 288,
+    "max": 34416
+  },
+  "post_likes_bins": {
+    "0": 220,
+    "1-9": 53,
+    "10-99": 5387,
+    "100-999": 4453,
+    "1000+": 55
+  },
+  "reported_comments_per_post": {
+    "average": 7.17,
+    "median": 1.0,
+    "p90": 14,
+    "max": 1203
+  },
+  "post_text_length": {
+    "average": 979.38,
+    "median": 779.0,
+    "p90": 2139,
+    "max": 7848
+  },
+  "images_per_post": {
+    "average": 1.48,
+    "median": 0.0,
+    "p90": 5,
+    "max": 6
+  },
+  "comment_likes": {
+    "average": 0.67,
+    "median": 0,
+    "p90": 1,
+    "max": 452
+  },
+  "comment_text_length": {
+    "average": 41.52,
+    "median": 29,
+    "p90": 76,
+    "max": 2872
+  }
+}

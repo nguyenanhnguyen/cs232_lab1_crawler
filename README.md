@@ -1,58 +1,45 @@
-# CS232 — Lab 1
+# CS232 Lab 1 — Thu thập bài viết và bình luận
 
-Ứng dụng thu thập bài viết và bình luận, lưu SQLite và theo dõi tiến độ bằng giao diện web cục bộ.
+Ứng dụng thu thập bài viết, ảnh, số lượt thích, số bình luận và bình luận từ trang có quyền truy cập. Dữ liệu được lưu trong SQLite; giao diện web hiển thị bài viết, thao tác thu thập và nhật ký theo thời gian thực.
 
-## Cài đặt và chạy
+## Chạy ứng dụng
 
-Yêu cầu Python 3.11 trở lên. Mở terminal tại thư mục `cs232_lab1`:
+Yêu cầu Python 3.11 trở lên. Tại thư mục dự án:
 
 ```powershell
-python -m venv .venv
-.venv\Scripts\Activate.ps1
 python -m pip install -e .
 python -m playwright install chromium
-python app.py
+python app.py ui --port 8787
 ```
 
-Truy cập **http://127.0.0.1:8787**, chọn collection, nhập URL và mở trang. Đăng nhập trong Chromium nếu cần, sau đó bấm bắt đầu crawl trên giao diện. Dừng ứng dụng bằng `Ctrl+C`.
+Mở `http://127.0.0.1:8787`, nhập URL, đăng nhập trong Chromium nếu cần rồi bấm **Bắt đầu crawl**. Có thể chọn collection, tìm bài, xem hoặc lấy bình luận trên giao diện. Dữ liệu mặc định lưu tại `data/crawler.db`; profile trình duyệt lưu tại `data/profile/`.
 
-Sau khi cài đặt, có thể dùng `cs232-lab1` hoặc tên lệnh tương thích `pagecrawl` thay cho `python app.py`.
+Các lệnh terminal khác:
 
 ```powershell
-python app.py ui --port 9000
-python app.py run --url "https://www.facebook.com/groups/ten-nhom" --collection "Lab 1"
-python app.py comments --collection "Lab 1" --min-comments 2
+python app.py run --url "https://www.facebook.com/groups/ten-nhom"
+python app.py comments --collection "mặc định" --min-comments 2
 python app.py report --url "https://www.facebook.com/groups/ten-nhom"
 ```
 
-Lệnh `run` cũng mở web để xác nhận bắt đầu sau bước đăng nhập. Lấy bình luận là tác vụ riêng, có thể thao tác trên web hoặc bằng lệnh `comments`. Dùng `--help` sau mỗi lệnh để xem tùy chọn.
+## Dữ liệu EDA
 
-## Giao diện ba cột
+Tạo lại báo cáo từ database đã thu thập:
 
-- Bên trái: URL, chế độ trình duyệt, bắt đầu/dừng, collection và thao tác bình luận.
-- Ở giữa: số liệu, tìm kiếm, danh sách bài và bình luận đã lưu.
-- Bên phải: nhật ký cập nhật trực tiếp.
+```powershell
+python eda.py --db ..\data\crawler.db --out eda
+```
 
-Mỗi khung cuộn dọc độc lập. Khi màn hình hẹp hơn 900 px, cuộn ngang để xem đủ ba cột. Dừng lấy bài trước khi lấy bình luận vì hai tác vụ dùng chung profile Chromium. Các nút đổi/xóa collection được khóa khi đang thu thập.
+Nếu chạy ứng dụng tại thư mục dự án và dùng đường dẫn mặc định, lệnh ngắn gọn là `python eda.py`. Thư mục `eda/` chứa `summary.json` (thống kê tổng quan), `posts_features.csv` (đặc trưng từng bài), `comments_features.csv` (đặc trưng từng bình luận) và `posts_by_month.csv` (số bài theo tháng đăng). Hai bảng đặc trưng dùng khóa băm để nối bài viết với bình luận, không xuất tên tác giả hay nội dung văn bản.
 
-Bài gặp lỗi khi mở hoặc đọc bình luận được giữ để thử lại ở lần chạy sau. Tiến độ bình luận cập nhật trong lúc chạy; danh sách bài được tải lại khi tác vụ kết thúc.
+| Chỉ tiêu từ lần xuất hiện tại | Số lượng |
+| --- | ---: |
+| Bài viết | 10.168 |
+| Bình luận đã lưu | 35.423 |
+| Bài có nội dung văn bản | 9.904 |
+| Bài có ít nhất một ảnh | 3.648 |
+| Bài có bình luận theo số liệu trên trang | 6.048 |
+| Bài đã hoàn tất lấy bình luận | 4.412 |
+| Bình luận trả lời (độ sâu trên 0) | 14.584 |
 
-## Các tệp chính
-
-| Tệp | Nội dung |
-| --- | --- |
-| `app.py` | Lệnh terminal, API, sự kiện tiến độ và quản lý phiên |
-| `data.py` | Mô hình bài viết/bình luận, SQLite, JSONL và trạng thái |
-| `extract.py` | Đọc payload, chuẩn hóa trường dữ liệu, gộp bài trùng |
-| `crawler.py` | Điều khiển trình duyệt, lấy bài và bình luận |
-| `dashboard.html` | Giao diện ba cột với bảng chức năng, danh sách bài và nhật ký |
-
-Mặc định dữ liệu được tạo trong thư mục làm việc hiện tại:
-
-- `data/crawler.db`: bài viết, bình luận, collection và lịch sử chạy.
-- `data/posts.jsonl`: thêm một dòng khi lưu hoặc cập nhật bài, giữ định dạng xuất cũ.
-- `data/profile/`: phiên đăng nhập Chromium.
-
-Có thể dùng `--db` và `--profile` để chọn đường dẫn khác. Muốn tiếp tục dữ liệu cũ, trỏ các tùy chọn này đến dữ liệu của bản gốc; đóng phiên dùng cùng profile trước khi chạy.
-
-Không kèm trang giả, lệnh `mock` hay bộ test. Định dạng dữ liệu xuất và quy tắc trích xuất vẫn tương thích với bản gốc; nhánh xử lý lỗi bình luận và khóa tác vụ đã được sửa. Kết quả crawl trực tiếp còn phụ thuộc dữ liệu trang và phiên đăng nhập tại thời điểm chạy.
+`summary.json` còn có phân bố lượt thích, độ sâu bình luận, độ dài văn bản, số ảnh mỗi bài và trạng thái các lượt thu thập. Dữ liệu `created_at` được gom theo tháng; bài thiếu ngày đăng được xếp vào `unknown`. Số bình luận trang hiển thị và số bình luận lưu được là hai chỉ tiêu khác nhau.
