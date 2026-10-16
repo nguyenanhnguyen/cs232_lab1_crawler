@@ -9,7 +9,7 @@ dist/
 .ruff_cache/
 .coverage
 htmlcov/
-#data/
+data/
 *.db
 *.db-wal
 *.db-shm
